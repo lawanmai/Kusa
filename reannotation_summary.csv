@@ -1,0 +1,3 @@
+title,n,Po,err_rate,kappa,k_lo,k_hi,PABAK
+"OVERALL  (representative, proportional label×category)",500,0.68,0.32,0.5205,0.463,0.5755,0.52
+"NEWS  (representative + top-up, audit-only excluded)",332,0.5512,0.4488,0.1613,0.1003,0.2276,0.3268
