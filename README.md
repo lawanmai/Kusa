@@ -74,4 +74,4 @@ If you use this code or the re-annotation data, please cite:
 
 ## License
 
-The code in this repository is released under the **MIT License**. KurdiSent itself is not part of this repository; its use is subject to the terms of Badawi et al. (2025).
+The code in this repository is released under the **MIT License**. KurdiSent itself is not part of this repository, its use is subject to the terms of Badawi et al. (2025).
