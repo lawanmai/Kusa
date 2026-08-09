@@ -1,0 +1,4 @@
+model_a,model_b,mean_fold_diff,se,t_stat,p_paired_t,n_folds
+baseline_v2,dual_view_v2,-0.03,0.0058,-5.1547,0.0067,5
+baseline_v2,dual_view_gated_v2,-0.0315,0.0055,-5.7801,0.0045,5
+dual_view_v2,dual_view_gated_v2,-0.0016,0.0037,-0.4265,0.6917,5

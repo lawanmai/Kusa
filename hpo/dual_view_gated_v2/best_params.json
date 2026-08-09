@@ -1,0 +1,14 @@
+{
+  "batch_size": 32,
+  "encoder_lr": 1e-05,
+  "head_lr": 0.002,
+  "dropout": 0.1,
+  "weight_decay": 0.01,
+  "warmup_ratio": 0.1,
+  "epochs": 4,
+  "_variant": "dual_view_gated_v2",
+  "_transferred_from": "dual_view_v2",
+  "_note": "identical training setup; only the fusion gate differs",
+  "_best_value": 0.8045676651879736,
+  "_n_trials": 0
+}

@@ -1,0 +1,23 @@
+# Core
+torch>=2.0
+transformers>=4.30
+numpy
+pandas
+scikit-learn
+scipy
+tqdm
+
+# Hyperparameter search
+optuna>=3.0
+
+# Plotting
+matplotlib
+
+# Kurdish morphological pipeline (pin: the coverage/preprocessing numbers in the
+# paper were produced with this version)
+klpt==0.1.7
+
+# Optional: only needed if you want to run the deep-significance ASO in
+# test_evaluation_v2 directly. aso_offline_v2 reimplements it with numpy/scipy
+# and needs nothing extra.
+# deepsig

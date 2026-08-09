@@ -1,0 +1,6 @@
+category,n,errors,error_rate_%,ci_lo_%,ci_hi_%,reliable
+news,855,224,26.2,23.36,29.25,True
+art,351,69,19.66,15.84,24.13,True
+technology,23,4,17.39,6.98,37.14,False
+social,1091,157,14.39,12.43,16.6,True
+health,135,17,12.59,8.01,19.24,False

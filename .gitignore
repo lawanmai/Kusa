@@ -1,0 +1,29 @@
+# --- Python / Jupyter ---
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+*.swp
+
+# --- KurdiSent corpus & any derived FULL-TEXT files (NOT redistributed) ---
+# Obtain the corpus separately and regenerate these locally; see datasets/README.md.
+datasets/*.csv
+splits/dev_pool.csv
+splits/test_LOCKED.csv
+
+# --- Private blind-annotation gold keys (must never be committed) ---
+*_PRIVATE.csv
+*private*.csv
+
+# --- Text-bearing analysis exports (regenerate by running the notebooks) ---
+*_misclassified.csv
+oof_surface_weights.csv
+
+# --- Model checkpoints (large; produced by the CV notebooks) ---
+*.pth
+final_models/

@@ -1,0 +1,23 @@
+{
+  "round1": {
+    "n_total": 745,
+    "n_evaluated": 650,
+    "n_context": 95,
+    "seed": 42,
+    "reproduces_existing": true
+  },
+  "round2": {
+    "n": 250,
+    "seed": 2026,
+    "test_total": 2455,
+    "pool_after_exclusions": 2147,
+    "n_excluded_as_seen": 745,
+    "test_locked_sha256": "fbf57402ef9aa70cec958fb55916fe70478ed85b3b732747bd68a1e3d27008d5"
+  },
+  "inputs": {
+    "KurdiSent.csv": "fe90d301bc431495fb5002b0e1651f2f8287eb641dd446072f2f4ea5ccde7fc0",
+    "KurdiSent_preprocessed.csv": "1ed2d675068f4d524441822b0e392596f1349e2bb9c56c65aef082cfedcdc2b6",
+    "misclassified.csv": "d6ea6cb0cace18714bd2b584852bce62e8c5e64f997bd12be86c36d6371511cb",
+    "_note": "preprocessed hash taken from split_manifest.json; round 2 was built offline from the uploaded split files"
+  }
+}
