@@ -121,20 +121,26 @@ STUDY_NAMES = {
     "dual_view_gated_v2":     "dual_view_gated_v2_heldout",
 }
 
-# Which variants run their own head search, and which inherit one. The rule:
-# an architecture with its own head architecture searches; a variant that shares
-# a head and introduces no additional hyperparameter inherits its configuration,
-# which also keeps the comparison between them single-variable.
+# Which variants run their own head search, and which inherit one.
 #   baseline_v2            - Roberta classification head, different -> own search
-#   dual_view_v2           - cross-attention + CNN-BiLSTM head     -> own search
+#   dual_view_v2           - cross-attention + CNN-BiLSTM head      -> own search
+#   single_view_complex_v2 - same head, single view                 -> own search
 #   dual_view_gated_v2     - same head plus a gate governed by head_lr -> inherits
-#   single_view_complex_v2 - same head without cross-attention     -> inherits
-#       (give it its own search only if it LOSES against dual_view: a win or a
-#        tie cannot be an artefact of under-tuning, only a loss could be)
-HPO_SEARCHES = ["baseline_v2", "dual_view_v2"]
+#
+# The ablation searches even though its head matches dual_view's. It is the run
+# that has to be able to REFUTE the claim that the second view matters, so it
+# must compete in its best configuration: a model fed one view instead of two
+# plausibly wants different regularisation. Inheriting would leave it open to the
+# charge of being under-tuned exactly where a loss is the expected - and
+# claim-supporting - outcome. Deciding to tune it only after seeing it lose would
+# be worse still: that is an adaptive choice, a forking path even on dev data.
+# The search is therefore pre-registered here, not made conditional.
+#
+# The gated variant still inherits: its gate introduces no additional
+# hyperparameter, and it serves as a probe rather than as evidence.
+HPO_SEARCHES = ["baseline_v2", "single_view_complex_v2", "dual_view_v2"]
 HPO_INHERITS = {
-    "dual_view_gated_v2":     "dual_view_v2",
-    "single_view_complex_v2": "dual_view_v2",
+    "dual_view_gated_v2": "dual_view_v2",
 }
 
 

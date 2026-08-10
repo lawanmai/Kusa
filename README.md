@@ -32,7 +32,7 @@ the compute budget goes into repetitions, not into a large hyperparameter search
 | variant | head | HPO |
 |---|---|---|
 | `baseline_v2` | XLM-R classification head | own search |
-| `single_view_complex_v2` | CNN-BiLSTM, surface only (ablation) | inherits `dual_view_v2` |
+| `single_view_complex_v2` | CNN-BiLSTM, surface only (ablation) | own search |
 | `dual_view_v2` | cross-attention + CNN-BiLSTM | own search |
 | `dual_view_gated_v2` | same + gate (probe) | inherits `dual_view_v2` |
 
@@ -40,8 +40,10 @@ the compute budget goes into repetitions, not into a large hyperparameter search
 effect of the second view: without it, a gain over the baseline is confounded
 between the two. It keeps the encoder, CNN (kernels 3/4/5, 200 filters), BiLSTM
 (128 per direction), dropout placement and classifier of the dual-view model, and
-removes only the lemma view and the cross-attention. It inherits the dual-view
-head configuration so the comparison stays single-variable.
+removes only the lemma view and the cross-attention. It runs its own search,
+pre-registered rather than conditional: this is the run that has to be able to
+refute the claim that the second view matters, so it competes in its best
+configuration rather than in one tuned for a two-view input.
 
 ## Hyperparameters
 
