@@ -1,9 +1,10 @@
 # Central configuration for the v2 Held-Out protocol.
 #
-# Usage in every v2 notebook:
-#     import sys
-#     sys.path.insert(0, "/content/drive/MyDrive/google_colab/kusa/v2_heldout")
+# Usage in every v2 notebook: the notebooks resolve the project root
+# themselves (KUSA_ROOT, then a list of candidate paths) and then do
 #     from config import *
+#     from models import *
+# so no Drive path is hardcoded anywhere.
 import os
 
 # ---------------------------------------------------------------- Paths
