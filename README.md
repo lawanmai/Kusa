@@ -13,8 +13,8 @@ the compute budget goes into repetitions, not into a large hyperparameter search
 - Grouped 5-fold CV on the development pool, with an identical fold assignment
   for all architectures.
 - Encoder hyperparameters fixed and shared by every architecture; each distinct
-  head runs its **own** search over the same space with the same budget. Equal
-  search budgets, not a shared configuration, are what make the comparison fair.
+  head runs its **own** exhaustive grid search (24 configurations). Equal search
+  budgets, not a shared configuration, are what make the comparison fair.
 - Epoch count searched per architecture, no early stopping, collapse guard
   (loss > ln 3 → restart with a different seed).
 - The **five fold models** of each architecture score the test set → a spread
@@ -23,7 +23,7 @@ the compute budget goes into repetitions, not into a large hyperparameter search
 
 > **Status:** results are being regenerated after a protocol correction (the
 > baseline's classification head now trains in its own parameter group at its own
-> searched learning rate, and a single-view ablation was added). This repository
+> searched learning rate, and a capacity-matched control was added). This repository
 > currently ships the code and the protocol; result files will be committed once
 > the runs complete.
 
@@ -32,18 +32,24 @@ the compute budget goes into repetitions, not into a large hyperparameter search
 | variant | head | HPO |
 |---|---|---|
 | `baseline_v2` | XLM-R classification head | own search |
-| `single_view_complex_v2` | CNN-BiLSTM, surface only (ablation) | own search |
+| `dual_view_dupinput_v2` | identical to dual-view, second view = surface | inherits `dual_view_v2` |
 | `dual_view_v2` | cross-attention + CNN-BiLSTM | own search |
 | `dual_view_gated_v2` | same + gate (probe) | inherits `dual_view_v2` |
 
-`single_view_complex_v2` separates the effect of the CNN-BiLSTM head from the
-effect of the second view: without it, a gain over the baseline is confounded
-between the two. It keeps the encoder, CNN (kernels 3/4/5, 200 filters), BiLSTM
-(128 per direction), dropout placement and classifier of the dual-view model, and
-removes only the lemma view and the cross-attention. It runs its own search,
-pre-registered rather than conditional: this is the run that has to be able to
-refute the claim that the second view matters, so it competes in its best
-configuration rather than in one tuned for a two-view input.
+`dual_view_dupinput_v2` is the capacity-matched control. It is the dual-view
+model itself — same architecture, same 7.84M-parameter head, same configuration —
+fed the surface view in place of the lemma view, so its cross-attention
+degenerates to self-attention and the second branch carries no information the
+first does not. That makes two comparisons possible:
+
+- `baseline_v2` → control: the architectural gain (head plus attention capacity)
+- control → `dual_view_v2`: **the morphological information itself**
+
+The second is parameter- and configuration-matched, which a single-view ablation
+cannot be — removing the cross-attention would drop 4.2M parameters at the same
+time and confound capacity with information. Both controls inherit the dual-view
+configuration by necessity: searching separately would give the arms different
+hyperparameters and make the comparison two-variable again.
 
 ## Hyperparameters
 
@@ -54,17 +60,19 @@ Fixed and identical for every architecture:
 | `batch_size` | 32 | Devlin et al. (2019), App. A.3 |
 | `weight_decay` | 0.01 | Liu et al. (2019) |
 | `warmup_ratio` | 0.10 | Liu et al. (2019) |
-| `encoder_lr` | 1e-5 | Mosbach et al. (2021) — below the BERT grid, since large models destabilise at higher rates |
+| `encoder_lr` | 1e-5 | The established range for XLM-R-large is ~5e-6–2e-5; fine-tuning instability grows with model size (Mosbach et al., 2021), which also motivates the collapse guard |
 | optimiser | AdamW | Loshchilov and Hutter (2019) |
 | `max_len` | 128 | data-driven (median 8, mean 9 tokens) |
 
-Searched per architecture, same space and same budget (10 TPE trials, Optuna):
+Searched per architecture, identical grid, exhaustively (24 configurations,
+Optuna `GridSampler` — every point is visited, so no architecture can be luckier
+than another and the sampler seed is irrelevant):
 
 | parameter | grid | source |
 |---|---|---|
-| `head_lr` | {5e-4, 1e-3, 2e-3} | Howard and Ruder (2018) — a newly initialised head needs a higher rate than the pretrained body |
-| `dropout` | {0.1, 0.3, 0.5} | standard regularisation range |
-| `epochs` | {3, 4, 5} | brackets Devlin et al. (2019) |
+| `head_lr` | {1e-4, 5e-4, 1e-3, 2e-3} | Howard and Ruder (2018) — a newly initialised head needs a higher rate than the pretrained body. Spans 10x–200x the encoder rate: the baseline's 1.05M-parameter MLP head is conventionally trained near the encoder rate, the 7.84M from-scratch CNN-BiLSTM head wants far more, and the grid has to contain both optima |
+| `dropout` | {0.1, 0.3} | 0.1 is the BERT default. 0.5 is excluded because the dual-view head applies dropout at three points before the classifier, leaving an effective retention near 0.125. Note this knob is not the same intervention in both architectures — the baseline applies it once, in `classifier_dropout` |
+| `epochs` | {3, 4, 5} | Devlin et al. (2019) {2,3,4} shifted up by one, since the encoder learns at a deliberately gentle rate; 741/988/1,235 optimizer steps at batch 32 |
 
 ## Repository layout
 
@@ -103,16 +111,17 @@ adjust the `sys.path.insert(...)` line at the top of each notebook) so that
 ## Execution order
 
 ```
-0. preprocess_kurdisent_v2                        -> datasets/   (needs KLPT 0.1.7)
-1. build_split_v2                                 -> splits/
-2. hpo_kusa_dual_view_v2, hpo_kusa_baseline_v2    -> hpo/        (10 trials each)
-3. hpo_kusa_single_view_complex_v2,
-   hpo_kusa_dual_view_gated_v2                    -> hpo/        (inherit, no training)
-4. kusa_*_cv_v2 (4x)                              -> cv/         (5 fold models each)
+0. preprocess_kurdisent_v2        -> datasets/          (once, needs KLPT 0.1.7)
+1. build_split_v2                 -> splits/            (once)
+2. hpo_kusa_dual_view_v2,
+   hpo_kusa_baseline_v2           -> hpo/  (exhaustive grid, 24 configurations each)
+3. hpo_kusa_dual_view_dupinput_v2,
+   hpo_kusa_dual_view_gated_v2    -> inherit from dual_view (no training)
+4. kusa_*_cv_v2 (4x)             -> cv/ (5 fold models per variant) + OOF
 5. kusa_category_error_outlier_v2, gate_analysis_v2,
-   kappa_evaluation_both_rounds                   -> analysis/
-6. test_evaluation_v2                             -> test_eval/  ONLY AT THE VERY END
-7. aso_offline_v2                                 -> test_eval/
+   kappa_evaluation_both_rounds   -> analysis/
+6. test_evaluation_v2            -> test_eval/   ONLY AT THE VERY END
+7. aso_offline_v2                -> test_eval/   (from stored predictions)
 ```
 
 `new_klpt_analysis_n_comparison` produces the KLPT coverage figures and can run
@@ -122,8 +131,8 @@ any time after preprocessing.
 
 - **descriptive**: macro-F1 of the five fold models per architecture, mean ± std.
 - **paired over items** (primary): bootstrap CI of the macro-F1 difference on the
-  averaged soft-vote predictions, plus an exact McNemar test on the majority
-  votes. These are independent across the 2,455 test items.
+  averaged soft-vote predictions, plus an exact McNemar test on those same
+  predictions. Both are independent across the 2,455 test items.
 - **paired over seeds** (secondary): paired t-test over the five fold
   differences. The folds share ~75% of their training data, so this test is
   anti-conservative on its own (Dietterich, 1998) and is reported as support, not

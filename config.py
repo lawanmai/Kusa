@@ -54,14 +54,22 @@ MAX_LEN = 128
 
 # ---------------------------------------------- Fixed encoder hyperparameters
 # The encoder side is fixed, not searched, and is identical for every
-# architecture. Sources for each value:
-#   batch_size   32    - canonical fine-tuning grid, Devlin et al. (2019, App. A.3)
+# architecture - a symmetric constraint, not a handicap for any one model.
+#   batch_size   32    - canonical fine-tuning grid, Devlin et al. (2019, App. A.3).
+#                        With ~7,880 training rows this gives ~247 steps/epoch.
 #   weight_decay 0.01  - AdamW setting of the RoBERTa family, Liu et al. (2019);
-#   warmup_ratio 0.10    XLM-R is a RoBERTa model, Conneau et al. (2020)
-#   encoder_lr   1e-5  - deliberately below the lowest BERT-grid value (2e-5):
-#                        large-model fine-tuning destabilises at higher rates,
-#                        Mosbach et al. (2021). Same source motivates the
-#                        collapse guard below.
+#   warmup_ratio 0.10    XLM-R is a RoBERTa model, Conneau et al. (2020). The
+#                        ratio is relative, so warmup scales with the searched
+#                        epoch count instead of interacting with it.
+#   encoder_lr   1e-5  - the established range for XLM-R-large is roughly
+#                        5e-6 to 2e-5. Note this is NOT "below the BERT grid":
+#                        that grid was tuned for a 110M/340M model, whereas
+#                        XLM-R-large has 560M parameters and fine-tuning
+#                        instability grows with model size (Mosbach et al.,
+#                        2021), which also motivates the collapse guard below.
+#                        A pilot under the earlier protocol selected 5e-6 for
+#                        the dual-view model and 2e-5 for the baseline, so 1e-5
+#                        is a deliberate midpoint held equal for both.
 FIXED_ENCODER = {
     "batch_size":   32,
     "encoder_lr":   1e-5,
@@ -69,24 +77,51 @@ FIXED_ENCODER = {
     "warmup_ratio": 0.10,
 }
 
-# Head search (head_lr, dropout, epochs), run per architecture with an equal
-# budget so that no variant is tuned more thoroughly than another.
-HPO_HEAD_TRIALS   = 10
+# ------------------------------------------------------ Head search space
+# Searched exhaustively per architecture with an identical grid, so that no
+# variant is tuned more thoroughly - or luckier - than another.
+#
+#   head_lr {1e-4, 5e-4, 1e-3, 2e-3}
+#       A randomly initialised head needs a higher rate than the pretrained body
+#       (discriminative fine-tuning, Howard and Ruder, 2018), so the grid spans
+#       10x to 200x the encoder rate. The lower bound matters: the baseline's
+#       classification head is a 1.05M-parameter MLP that standard fine-tuning
+#       trains at the *encoder* rate, whereas the dual-view head is a 7.84M
+#       from-scratch CNN-BiLSTM stack that wants far more. A grid starting at
+#       5e-4 would have been chosen for the latter and imposed on the former,
+#       excluding the baseline's plausible optimum from below - the mirror image
+#       of the flaw this design fixes. It stops one order of magnitude above the
+#       encoder rate because a head rate *equal* to it is exactly the
+#       configuration the earlier protocol used and that this design corrects.
+#
+#   dropout {0.1, 0.3}
+#       0.1 is the BERT default; 0.3 is already a wide excursion. 0.5 is excluded
+#       on architectural grounds: the dual-view head applies dropout at three
+#       points before the classifier, so a nominal 0.5 leaves an effective
+#       retention near 0.125. Note the knob is not the same intervention in both
+#       architectures - the baseline applies it once, in classifier_dropout -
+#       which the paper states rather than glossing over.
+#
+#   epochs {3, 4, 5}
+#       The canonical {2,3,4} of Devlin et al. (2019) shifted up by one: the
+#       encoder learns at a deliberately gentle rate while the head converges
+#       fast, so a little more exposure is reasonable. Gives 741/988/1,235
+#       optimizer steps at batch 32.
+HEAD_LR_GRID = [1e-4, 5e-4, 1e-3, 2e-3]
+DROPOUT_GRID = [0.1, 0.3]
+EPOCH_GRID   = [3, 4, 5]
+EPOCH_MIN, EPOCH_MAX = min(EPOCH_GRID), max(EPOCH_GRID)
 
-# Epoch range, searched per architecture. Brackets the canonical {2,3,4} of
-# Devlin et al. (2019), opened downwards because the earlier dual_view search
-# selected the lower bound of its range. Search space and trial budget are
-# identical for every architecture - that symmetry is what makes the comparison
-# fair, not a shared configuration.
-EPOCH_MIN, EPOCH_MAX = 3, 5
-
-# Head search space, identical for every architecture:
-#   head_lr {5e-4, 1e-3, 2e-3} - a randomly initialised head needs a higher rate
-#                                than the pretrained body (Howard and Ruder, 2018)
-#   dropout {0.1, 0.3, 0.5}    - standard regularisation range
-#   epochs  {3, 4, 5}          - see above
-HEAD_LR_GRID = [5e-4, 1e-3, 2e-3]
-DROPOUT_GRID = [0.1, 0.3, 0.5]
+# The search is exhaustive (optuna GridSampler), not sampled: with only 24
+# configurations a TPE sampler would add nothing but the risk that one
+# architecture draws a lucky configuration and another does not. Because every
+# point is visited, HPO_SEED no longer influences the outcome.
+HPO_GRID = {
+    "head_lr": HEAD_LR_GRID,
+    "dropout": DROPOUT_GRID,
+    "epochs":  EPOCH_GRID,
+}
+HPO_HEAD_TRIALS = len(HEAD_LR_GRID) * len(DROPOUT_GRID) * len(EPOCH_GRID)  # 24
 
 # NOTE: the former baseline epoch robustness check (ROBUSTNESS_EPOCHS) has been
 # removed. It only existed because the baseline inherited its epoch count from
@@ -108,43 +143,53 @@ BOOTSTRAP_SEED = 2026
 ASO_SEED       = 2026    # deep-significance Almost-Stochastic-Order test
 
 # -------------------------------------------------------------- Variants
-# single_view_complex_v2 is the ablation that separates the effect of the
-# CNN-BiLSTM head from the effect of the second (lemma) view: it feeds the
-# surface view alone through the same head, without cross-attention.
+# dual_view_dupinput_v2 is the capacity-matched control: the dual-view model,
+# unchanged, fed the surface view in place of the lemma view. Same parameters,
+# same architecture, same configuration - the second view simply carries no
+# additional information, and its cross-attention degenerates to self-attention.
+# Comparing dual_view_v2 against it therefore isolates the *morphological
+# information* rather than the capacity of the attention layer, which a
+# single-view ablation cannot do: dropping the cross-attention would also drop
+# 4.2M parameters and confound the two.
 VARIANTS = [
     "baseline_v2",
-    "single_view_complex_v2",
+    "dual_view_dupinput_v2",
     "dual_view_v2",
     "dual_view_gated_v2",
 ]
 
 STUDY_NAMES = {
-    "baseline_v2":            "baseline_v2_heldout",
-    "single_view_complex_v2": "single_view_complex_v2_heldout",
-    "dual_view_v2":           "dual_view_v2_heldout",
-    "dual_view_gated_v2":     "dual_view_gated_v2_heldout",
+    "baseline_v2":           "baseline_v2_heldout",
+    "dual_view_dupinput_v2": "dual_view_dupinput_v2_heldout",
+    "dual_view_v2":          "dual_view_v2_heldout",
+    "dual_view_gated_v2":    "dual_view_gated_v2_heldout",
 }
 
+# Which view feeds the second branch. dual_view_dupinput_v2 reads the surface
+# column twice; every other dual-view variant reads the lemma column.
+LEMMA_COL = {v: ("surface" if v == "dual_view_dupinput_v2" else "lemma")
+             for v in VARIANTS}
+
 # Which variants run their own head search, and which inherit one.
-#   baseline_v2            - Roberta classification head, different -> own search
-#   dual_view_v2           - cross-attention + CNN-BiLSTM head      -> own search
-#   single_view_complex_v2 - same head, single view                 -> own search
-#   dual_view_gated_v2     - same head plus a gate governed by head_lr -> inherits
+#   baseline_v2           - Roberta classification head, different -> own search
+#   dual_view_v2          - cross-attention + CNN-BiLSTM head      -> own search
+#   dual_view_dupinput_v2 - identical architecture, different input -> inherits
+#   dual_view_gated_v2    - identical head plus a gate on head_lr   -> inherits
 #
-# The ablation searches even though its head matches dual_view's. It is the run
-# that has to be able to REFUTE the claim that the second view matters, so it
-# must compete in its best configuration: a model fed one view instead of two
-# plausibly wants different regularisation. Inheriting would leave it open to the
-# charge of being under-tuned exactly where a loss is the expected - and
-# claim-supporting - outcome. Deciding to tune it only after seeing it lose would
-# be worse still: that is an adaptive choice, a forking path even on dev data.
-# The search is therefore pre-registered here, not made conditional.
+# The two inheriting variants *must* inherit rather than search. Both share
+# dual_view's architecture exactly; giving them their own configuration would
+# make the comparison against it two-variable again and destroy the very
+# question they exist to answer. For dual_view_dupinput_v2 in particular, the
+# whole point is that architecture and configuration are held constant while
+# only the information in the second view changes.
 #
-# The gated variant still inherits: its gate introduces no additional
-# hyperparameter, and it serves as a probe rather than as evidence.
-HPO_SEARCHES = ["baseline_v2", "single_view_complex_v2", "dual_view_v2"]
+# The two searching variants have genuinely different heads and therefore
+# genuinely different optima, so each searches the same grid with the same
+# exhaustive budget.
+HPO_SEARCHES = ["baseline_v2", "dual_view_v2"]
 HPO_INHERITS = {
-    "dual_view_gated_v2": "dual_view_v2",
+    "dual_view_dupinput_v2": "dual_view_v2",
+    "dual_view_gated_v2":    "dual_view_v2",
 }
 
 

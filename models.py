@@ -37,7 +37,6 @@ __all__ = [
     "CollapseError",
     "split_param_groups",
     "DualViewCNNBiLSTMAttention",
-    "SingleViewCNNBiLSTM",
 ]
 
 
@@ -67,11 +66,18 @@ class SurfaceOnlyDataset(Dataset):
 
 
 class DualViewSurfaceLemmaDataset(Dataset):
-    """Surface and lemma view, tokenised separately and aligned by index."""
+    """Surface and second view, tokenised separately and aligned by index.
 
-    def __init__(self, df, tokenizer, max_len=MAX_LEN):
+    `lemma_col` selects the column feeding the second branch. It exists for the
+    capacity-matched control `dual_view_dupinput_v2`, which passes
+    ``lemma_col="surface"``: the model, its parameters and its configuration are
+    then identical to the dual-view model, and only the information carried by
+    the second view differs.
+    """
+
+    def __init__(self, df, tokenizer, max_len=MAX_LEN, lemma_col="lemma"):
         self.surface   = df["surface"].tolist()
-        self.lemma     = df["lemma"].tolist()
+        self.lemma     = df[lemma_col].tolist()
         self.labels    = df["label"].tolist()
         self.tokenizer = tokenizer
         self.max_len   = max_len
@@ -239,79 +245,3 @@ class DualViewCNNBiLSTMAttention(nn.Module):
         fused  = torch.cat((cnn_out, lstm_pooled), dim=1)
         logits = self.fc(self.dropout(fused))
         return (logits, surface_weight) if self.gated else logits
-
-
-class SingleViewCNNBiLSTM(nn.Module):
-    """Ablation: the dual-view head with the second view removed.
-
-    Keeps the encoder, the multi-scale CNN (kernels 3/4/5, 200 filters), the
-    single-layer BiLSTM (128 per direction), the dropout placement and the
-    856-dimensional classifier input. Removed are the lemma view and the
-    cross-attention, so both branches read the surface representation.
-
-    Comparing against `DualViewCNNBiLSTMAttention` isolates the second view;
-    comparing against the plain baseline isolates the head.
-    """
-
-    def __init__(self, bert_model_name="xlm-roberta-large", lstm_hidden_dim=128,
-                 cnn_filters=200, kernel_sizes=(3, 4, 5), num_classes=3,
-                 dropout=0.3):
-        super(SingleViewCNNBiLSTM, self).__init__()
-
-        base_model = AutoModelForSequenceClassification.from_pretrained(
-            bert_model_name, return_dict=True, num_labels=num_classes
-        )
-        self.encoder = (base_model.roberta if hasattr(base_model, "roberta")
-                        else base_model.bert)
-        bert_hidden_dim = self.encoder.config.hidden_size
-
-        self.convs = nn.ModuleList([
-            nn.Conv2d(in_channels=1, out_channels=cnn_filters,
-                      kernel_size=(k, bert_hidden_dim))
-            for k in kernel_sizes
-        ])
-        self.bilstm = nn.LSTM(
-            input_size=bert_hidden_dim, hidden_size=lstm_hidden_dim,
-            num_layers=1, bidirectional=True, batch_first=True
-        )
-
-        fused_dim = (cnn_filters * len(kernel_sizes)) + (lstm_hidden_dim * 2)
-        self.dropout = nn.Dropout(dropout)
-        self.fc      = nn.Linear(fused_dim, num_classes)
-
-    def forward(self, surface):
-        surface_mask = surface["attention_mask"]
-        surface_out  = self.dropout(self.encoder(**surface).last_hidden_state)
-
-        # Same masking and dropout as the fused branch of the dual-view model,
-        # only without the cross-attended lemma representation.
-        pad_mask_2d = (surface_mask == 0).unsqueeze(-1)
-        lstm_input  = self.dropout(surface_out.masked_fill(pad_mask_2d, 0.0))
-
-        pad_mask_4d = (surface_mask == 0).unsqueeze(1).unsqueeze(-1)
-        cnn_input   = surface_out.unsqueeze(1).masked_fill(pad_mask_4d, 0.0)
-
-        cnn_features = []
-        for conv in self.convs:
-            x = F.relu(conv(cnn_input)).squeeze(3)
-            x = F.max_pool1d(x, kernel_size=x.size(2)).squeeze(2)
-            cnn_features.append(x)
-        cnn_out = torch.cat(cnn_features, dim=1)
-
-        lengths      = surface_mask.sum(dim=1).cpu()
-        packed_input = nn.utils.rnn.pack_padded_sequence(
-            lstm_input, lengths, batch_first=True, enforce_sorted=False
-        )
-        packed_output, _ = self.bilstm(packed_input)
-        lstm_out, _      = nn.utils.rnn.pad_packed_sequence(
-            packed_output, batch_first=True, total_length=surface_mask.size(1)
-        )
-
-        input_mask_expanded = surface_mask.unsqueeze(-1).expand(lstm_out.size()).float()
-        sum_embeddings = torch.sum(lstm_out * input_mask_expanded, dim=1)
-        sum_mask       = torch.clamp(input_mask_expanded.sum(dim=1), min=1e-9)
-        lstm_pooled    = sum_embeddings / sum_mask
-
-        fused  = torch.cat((cnn_out, lstm_pooled), dim=1)
-        logits = self.fc(self.dropout(fused))
-        return logits
