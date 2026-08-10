@@ -48,6 +48,10 @@ TEST_FRAC = 0.20
 HPO_FRAC  = 0.20
 N_FOLDS   = 5
 
+# Maximum sequence length, shared by every dataset in models.py. Generous for
+# this corpus: the texts have a median of 8 and a mean of 9 whitespace tokens.
+MAX_LEN = 128
+
 # ---------------------------------------------- Fixed encoder hyperparameters
 # The encoder side is fixed, not searched, and is identical for every
 # architecture. Sources for each value:
