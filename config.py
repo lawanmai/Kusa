@@ -49,11 +49,15 @@ HPO_FRAC  = 0.20
 N_FOLDS   = 5
 
 # ---------------------------------------------- Fixed encoder hyperparameters
-# The encoder side is fixed, not searched. These are the established stable
-# values for XLM-R-large; higher learning rates are exactly where fine-tuning
-# runs collapse. Only the architecture-specific head is tuned, on the
-# average-fusion variant, and transferred to the other two so that all three
-# architectures share an identical training setup (isolating the fusion).
+# The encoder side is fixed, not searched, and is identical for every
+# architecture. Sources for each value:
+#   batch_size   32    - canonical fine-tuning grid, Devlin et al. (2019, App. A.3)
+#   weight_decay 0.01  - AdamW setting of the RoBERTa family, Liu et al. (2019);
+#   warmup_ratio 0.10    XLM-R is a RoBERTa model, Conneau et al. (2020)
+#   encoder_lr   1e-5  - deliberately below the lowest BERT-grid value (2e-5):
+#                        large-model fine-tuning destabilises at higher rates,
+#                        Mosbach et al. (2021). Same source motivates the
+#                        collapse guard below.
 FIXED_ENCODER = {
     "batch_size":   32,
     "encoder_lr":   1e-5,
@@ -61,14 +65,31 @@ FIXED_ENCODER = {
     "warmup_ratio": 0.10,
 }
 
-# Small head search (head_lr, dropout, epochs) on dual_view_v2 only.
+# Head search (head_lr, dropout, epochs), run per architecture with an equal
+# budget so that no variant is tuned more thoroughly than another.
 HPO_HEAD_TRIALS   = 10
-EPOCH_MIN, EPOCH_MAX = 4, 5
 
-# Baseline epoch robustness check (Option 3): confirm that the epoch count
-# transferred from dual_view does not disadvantage the baseline. These counts
-# are compared on the dev CV only - the test set is never touched.
-ROBUSTNESS_EPOCHS = [4, 5]
+# Epoch range, searched per architecture. Brackets the canonical {2,3,4} of
+# Devlin et al. (2019), opened downwards because the earlier dual_view search
+# selected the lower bound of its range. Search space and trial budget are
+# identical for every architecture - that symmetry is what makes the comparison
+# fair, not a shared configuration.
+EPOCH_MIN, EPOCH_MAX = 3, 5
+
+# Head search space, identical for every architecture:
+#   head_lr {5e-4, 1e-3, 2e-3} - a randomly initialised head needs a higher rate
+#                                than the pretrained body (Howard and Ruder, 2018)
+#   dropout {0.1, 0.3, 0.5}    - standard regularisation range
+#   epochs  {3, 4, 5}          - see above
+HEAD_LR_GRID = [5e-4, 1e-3, 2e-3]
+DROPOUT_GRID = [0.1, 0.3, 0.5]
+
+# NOTE: the former baseline epoch robustness check (ROBUSTNESS_EPOCHS) has been
+# removed. It only existed because the baseline inherited its epoch count from
+# dual_view without a search of its own. Every architecture now searches its own
+# head configuration - including the epoch count - so the search subsumes the
+# check, and re-testing a value that was just selected on the same dev pool
+# would not be independent evidence anyway.
 
 # Collapse guard: if the mean training loss after epoch 1 exceeds ln(3) (the
 # loss of a uniform 3-class predictor), the run has diverged - restart with a
@@ -83,12 +104,37 @@ BOOTSTRAP_SEED = 2026
 ASO_SEED       = 2026    # deep-significance Almost-Stochastic-Order test
 
 # -------------------------------------------------------------- Variants
-VARIANTS = ["baseline_v2", "dual_view_v2", "dual_view_gated_v2"]
+# single_view_complex_v2 is the ablation that separates the effect of the
+# CNN-BiLSTM head from the effect of the second (lemma) view: it feeds the
+# surface view alone through the same head, without cross-attention.
+VARIANTS = [
+    "baseline_v2",
+    "single_view_complex_v2",
+    "dual_view_v2",
+    "dual_view_gated_v2",
+]
 
 STUDY_NAMES = {
-    "baseline_v2":        "baseline_v2_heldout",
-    "dual_view_v2":       "dual_view_v2_heldout",
-    "dual_view_gated_v2": "dual_view_gated_v2_heldout",
+    "baseline_v2":            "baseline_v2_heldout",
+    "single_view_complex_v2": "single_view_complex_v2_heldout",
+    "dual_view_v2":           "dual_view_v2_heldout",
+    "dual_view_gated_v2":     "dual_view_gated_v2_heldout",
+}
+
+# Which variants run their own head search, and which inherit one. The rule:
+# an architecture with its own head architecture searches; a variant that shares
+# a head and introduces no additional hyperparameter inherits its configuration,
+# which also keeps the comparison between them single-variable.
+#   baseline_v2            - Roberta classification head, different -> own search
+#   dual_view_v2           - cross-attention + CNN-BiLSTM head     -> own search
+#   dual_view_gated_v2     - same head plus a gate governed by head_lr -> inherits
+#   single_view_complex_v2 - same head without cross-attention     -> inherits
+#       (give it its own search only if it LOSES against dual_view: a win or a
+#        tie cannot be an artefact of under-tuning, only a loss could be)
+HPO_SEARCHES = ["baseline_v2", "dual_view_v2"]
+HPO_INHERITS = {
+    "dual_view_gated_v2":     "dual_view_v2",
+    "single_view_complex_v2": "dual_view_v2",
 }
 
 

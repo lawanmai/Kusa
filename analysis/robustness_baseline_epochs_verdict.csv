@@ -1,2 +1,0 @@
-epochs,vs_canonical,mean_diff,per_fold_diff,seed_std,within_seed_std,paired_t,p
-5,4,0.0083,"[0.0027, 0.0305, 0.0117, -0.0066, 0.0033]",0.0208,True,1.332,0.2538

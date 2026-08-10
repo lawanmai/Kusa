@@ -1,4 +1,0 @@
-model_a,model_b,macro_f1_diff,ci_lo,ci_hi,p_bootstrap,only_a_correct,only_b_correct,discordant,p_mcnemar,n_bootstrap
-baseline_v2,dual_view_v2,-0.0284,-0.0393,-0.0175,0.0,68,137,205,0.0,10000
-baseline_v2,dual_view_gated_v2,-0.0305,-0.0421,-0.0197,0.0,64,136,200,0.0,10000
-dual_view_v2,dual_view_gated_v2,-0.0022,-0.0098,0.0056,0.5782,51,54,105,0.8454,10000

@@ -1,6 +1,0 @@
-category,total,errors,error_rate_%,ci_lo_%,ci_hi_%,ci_width_pp,reliable
-technology,135,39,28.89,21.91,37.03,15.12,False
-news,3447,948,27.5,26.04,29.02,2.98,True
-art,1408,257,18.25,16.32,20.36,4.03,True
-social,4372,718,16.42,15.35,17.55,2.2,True
-health,489,80,16.36,13.35,19.9,6.55,True

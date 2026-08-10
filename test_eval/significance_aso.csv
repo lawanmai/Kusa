@@ -1,4 +1,0 @@
-better,worse,mean_diff,eps_hat,eps_min_95,A12_better_over_worse,paired_t_p,dominates
-dual_view_v2,baseline_v2,0.03,0.0,0.0,1.0,0.0067,True
-dual_view_gated_v2,baseline_v2,0.0315,0.0,0.0,1.0,0.0045,True
-dual_view_gated_v2,dual_view_v2,0.0016,0.2108,0.9999,0.64,0.6917,False
