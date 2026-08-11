@@ -35,6 +35,7 @@ __all__ = [
     "dual_collator",
     "dual_surface_lemma_collator",
     "CollapseError",
+    "epoch_tail_loss",
     "split_param_groups",
     "DualViewCNNBiLSTMAttention",
 ]
@@ -121,7 +122,22 @@ dual_surface_lemma_collator = dual_collator
 
 # ---------------------------------------------------------------- training
 class CollapseError(RuntimeError):
-    """Raised when a fine-tuning run diverges (epoch-1 loss above ln(3))."""
+    """Raised when a fine-tuning run diverges (see epoch_tail_loss)."""
+
+
+def epoch_tail_loss(batch_losses, tail_frac=0.2):
+    """Mean training loss over the LAST `tail_frac` of an epoch.
+
+    The collapse guard must not average over the whole first epoch. With three
+    balanced classes the loss starts at exactly ln(3), and linear warmup keeps
+    the opening steps from learning at all, so a whole-epoch mean sits near that
+    threshold even for a perfectly healthy run - the guard then fires on slow
+    convergence instead of on divergence. Measured over the tail of the epoch,
+    after warmup has passed, a run that is still at ln(3) really is stuck.
+    """
+    n = max(1, int(len(batch_losses) * tail_frac))
+    tail = batch_losses[-n:]
+    return sum(tail) / len(tail)
 
 
 def split_param_groups(model, encoder_attr="encoder"):
