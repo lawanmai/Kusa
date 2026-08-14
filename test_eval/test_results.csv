@@ -1,0 +1,5 @@
+variant,n_test,cv_dev_mean,cv_dev_std,test_fold_mean,test_fold_std,test_ensemble_f1,test_ensemble_acc
+baseline_v2,2455,0.8061,0.0056,0.8061,0.0044,0.814,0.811
+dual_view_dupinput_v2,2455,0.809,0.0154,0.8222,0.0069,0.8342,0.8322
+dual_view_v2,2455,0.8139,0.0149,0.8284,0.0054,0.8376,0.8354
+dual_view_gated_v2,2455,0.8129,0.0151,0.8242,0.0059,0.832,0.8297

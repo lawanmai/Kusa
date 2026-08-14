@@ -1,0 +1,16 @@
+{
+  "batch_size": 32,
+  "encoder_lr": 1e-05,
+  "head_lr": 0.001,
+  "dropout": 0.3,
+  "weight_decay": 0.01,
+  "warmup_ratio": 0.1,
+  "epochs": 5,
+  "_variant": "dual_view_gated_v2",
+  "_inherited_from": "dual_view_v2",
+  "_note": "identical head architecture; inheriting keeps the comparison against the source single-variable",
+  "_best_value": 0.8206640132958958,
+  "_n_trials": 0,
+  "_hpo_slice_seed": 1337,
+  "_hpo_seed": 2026
+}

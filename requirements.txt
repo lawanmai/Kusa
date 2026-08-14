@@ -17,7 +17,8 @@ matplotlib
 # paper were produced with this version)
 klpt==0.1.7
 
-# Optional: only needed if you want to run the deep-significance ASO in
-# test_evaluation_v2 directly. aso_offline_v2 reimplements it with numpy/scipy
-# and needs nothing extra.
-# deepsig
+# Almost-Stochastic-Order test, run inside test_evaluation_v2. The PyPI
+# distribution is named deepsig, not deep-significance; the import is
+# `from deepsig import aso`. test_evaluation_v2 degrades gracefully if it is
+# absent (HAVE_ASO = False) and reports the other tests regardless.
+deepsig

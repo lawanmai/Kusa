@@ -1,0 +1,7 @@
+model_a,model_b,mean_fold_diff,se,t_stat,p_paired_t,n_folds,aso_a_over_b,aso_b_over_a
+baseline_v2,dual_view_dupinput_v2,-0.0161,0.0046,-3.4841,0.0253,5,0.9988,0.0
+baseline_v2,dual_view_v2,-0.0223,0.0032,-6.957,0.0022,5,0.9973,0.0
+baseline_v2,dual_view_gated_v2,-0.0181,0.0043,-4.1768,0.014,5,1.0,0.0
+dual_view_dupinput_v2,dual_view_v2,-0.0062,0.0029,-2.1751,0.0953,5,1.0,0.2161
+dual_view_dupinput_v2,dual_view_gated_v2,-0.002,0.0025,-0.8093,0.4638,5,1.0,0.6217
+dual_view_v2,dual_view_gated_v2,0.0042,0.0027,1.5828,0.1886,5,0.4045,1.0

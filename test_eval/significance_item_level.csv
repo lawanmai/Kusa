@@ -1,0 +1,7 @@
+model_a,model_b,macro_f1_diff,ci_lo,ci_hi,p_bootstrap,only_a_correct,only_b_correct,discordant,p_mcnemar,n_bootstrap
+baseline_v2,dual_view_dupinput_v2,-0.0202,-0.0295,-0.0108,0.0,45,97,142,0.0,10000
+baseline_v2,dual_view_v2,-0.0236,-0.033,-0.0141,0.0,40,100,140,0.0,10000
+baseline_v2,dual_view_gated_v2,-0.018,-0.0274,-0.0085,0.0004,50,96,146,0.0002,10000
+dual_view_dupinput_v2,dual_view_v2,-0.0035,-0.0101,0.0033,0.3188,32,40,72,0.4096,10000
+dual_view_dupinput_v2,dual_view_gated_v2,0.0021,-0.0036,0.0078,0.4614,30,24,54,0.4966,10000
+dual_view_v2,dual_view_gated_v2,0.0056,-0.0012,0.0123,0.1098,44,30,74,0.1302,10000

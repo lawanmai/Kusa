@@ -1,0 +1,17 @@
+{
+  "head_lr": 0.0005,
+  "dropout": 0.1,
+  "epochs": 5,
+  "batch_size": 32,
+  "encoder_lr": 1e-05,
+  "weight_decay": 0.01,
+  "warmup_ratio": 0.1,
+  "_hpo_slice_seed": 1337,
+  "_variant": "baseline_v2",
+  "_study": "baseline_v2_heldout",
+  "_best_value": 0.8078218502214067,
+  "_n_trials": 24,
+  "_hpo_frac": 0.2,
+  "_hpo_seed": 2026,
+  "_note": "own head search, same space and budget as dual_view_v2; encoder fixed and shared across architectures"
+}

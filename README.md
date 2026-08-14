@@ -21,11 +21,34 @@ the compute budget goes into repetitions, not into a large hyperparameter search
   estimate without extra runs, plus paired significance tests over seeds and
   over items.
 
-> **Status:** results are being regenerated after a protocol correction (the
-> baseline's classification head now trains in its own parameter group at its own
-> searched learning rate, and a capacity-matched control was added). This repository
-> currently ships the code and the protocol; result files will be committed once
-> the runs complete.
+> **Status:** the pipeline has run end to end and the result files are committed.
+> The locked test set has been scored once and is now spent.
+
+## Results
+
+Test set, n = 2,455, five-fold soft-vote ensemble (`test_eval/test_results.csv`):
+
+| variant | test macro-F1 | per-fold mean ± std | dev-pool OOF |
+|---|---|---|---|
+| `baseline_v2` | 0.814 | 0.806 ± 0.004 | 0.806 |
+| `dual_view_dupinput_v2` (control) | 0.834 | 0.822 ± 0.007 | 0.809 |
+| `dual_view_v2` | **0.838** | 0.828 ± 0.005 | 0.814 |
+| `dual_view_gated_v2` | 0.832 | 0.824 ± 0.006 | 0.813 |
+
+The decomposition the control makes possible (`test_eval/significance_*.csv`):
+
+| step | Δ macro-F1 | bootstrap 95% CI | McNemar | paired t over folds |
+|---|---|---|---|---|
+| architecture (`baseline_v2` → control) | +0.020 | [+0.011, +0.030] | p < 0.001 | p = 0.025 |
+| morphology (control → `dual_view_v2`) | +0.004 | [−0.003, +0.010] | p = 0.41 | p = 0.095 |
+| total (`baseline_v2` → `dual_view_v2`) | +0.024 | [+0.014, +0.033] | p < 0.001 | p = 0.002 |
+
+The dual-view architecture improves over the single-view baseline by about two
+macro-F1 points, and that gain survives every paired test. Replacing the second
+branch's surface view with the lemma view adds a further +0.004, which does not.
+With capacity and configuration held fixed, the measurable gain is architectural;
+the morphological contribution specifically is small and not separable from noise
+on this corpus.
 
 ## Architectures
 
@@ -121,7 +144,6 @@ adjust the `sys.path.insert(...)` line at the top of each notebook) so that
 5. kusa_category_error_outlier_v2, gate_analysis_v2,
    kappa_evaluation_both_rounds   -> analysis/
 6. test_evaluation_v2            -> test_eval/   ONLY AT THE VERY END
-7. aso_offline_v2                -> test_eval/   (from stored predictions)
 ```
 
 `new_klpt_analysis_n_comparison` produces the KLPT coverage figures and can run
@@ -134,9 +156,10 @@ any time after preprocessing.
   averaged soft-vote predictions, plus an exact McNemar test on those same
   predictions. Both are independent across the 2,455 test items.
 - **paired over seeds** (secondary): paired t-test over the five fold
-  differences. The folds share ~75% of their training data, so this test is
-  anti-conservative on its own (Dietterich, 1998) and is reported as support, not
-  as the primary evidence.
+  differences, plus the Almost-Stochastic-Order test (`deepsig`). The folds share
+  ~75% of their training data, so the t-test is anti-conservative on its own
+  (Dietterich, 1998), and with n = 5 runs ASO cannot carry a dominance claim
+  either. Both are reported as support, not as the primary evidence.
 
 ## Rules
 
