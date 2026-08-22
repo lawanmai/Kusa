@@ -35,7 +35,13 @@ import numpy as np
 import pandas as pd
 
 # ----------------------------------------------------------------- config
-ROOT = "/content/drive/MyDrive/google_colab/kusa/v2_heldout"
+# Portable, same convention as config.py: this file lives in <root>/annotation/,
+# so the project root is its parent directory. Override with KUSA_ROOT if the
+# script is run from outside the checkout.
+ROOT = os.environ.get(
+    "KUSA_ROOT",
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+).replace("\\", "/").rstrip("/")
 
 DATA       = ROOT + "/datasets"
 SPLITS     = ROOT + "/splits"

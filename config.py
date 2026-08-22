@@ -14,7 +14,7 @@ import os
 V2   = os.environ.get("KUSA_ROOT", os.path.dirname(os.path.abspath(__file__)))
 ROOT = os.path.dirname(V2)
 
-# All data resides within v2_heldout - the folder is self-contained.
+# All data resides within the project root - the folder is self-contained.
 DATA = V2 + "/datasets"
 
 ORIGINAL     = DATA + "/KurdiSent.csv"                 # Raw corpus, read-only
