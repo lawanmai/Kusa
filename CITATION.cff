@@ -1,0 +1,59 @@
+cff-version: 1.2.0
+message: >-
+  If you use this software or the released result files, please cite both the
+  accompanying paper and the KurdiSent corpus it is built on.
+title: >-
+  kusa - Morphology-Aware Sentiment Analysis for Sorani Kurdish
+abstract: >-
+  Code and reproducibility artefacts for a dual-view adaptation of the SARF
+  architecture to Sorani Kurdish sentiment analysis on the KurdiSent corpus,
+  evaluated under a leakage-controlled held-out protocol with a capacity-matched
+  control that separates the architectural gain from the morphological one. The
+  KurdiSent corpus itself is not redistributed here.
+type: software
+license: MIT
+repository-code: 'https://github.com/lawanmai/Kusa'
+keywords:
+  - sentiment analysis
+  - Sorani Kurdish
+  - low-resource NLP
+  - morphology
+  - multi-view learning
+  - XLM-RoBERTa
+  - reproducibility
+authors:
+  - family-names: Mai
+    given-names: Lawan
+  - family-names: Hassan
+    given-names: Shene
+preferred-citation:
+  type: unpublished
+  title: >-
+    Does Morphological Multi-View Transfer to Low-Resource Kurdish? A Dual-View
+    Adaptation of SARF and a Re-Annotation Audit of KurdiSent
+  authors:
+    - family-names: Mai
+      given-names: Lawan
+    - family-names: Hassan
+      given-names: Shene
+  notes: Under review; venue and year to be filled in on acceptance.
+references:
+  - type: article
+    title: 'KurdiSent: a corpus for Kurdish sentiment analysis'
+    authors:
+      - family-names: Badawi
+        given-names: Soran
+      - family-names: Kazemi
+        given-names: Arefeh
+      - family-names: Rezaie
+        given-names: Vali
+    journal: Language Resources and Evaluation
+    volume: 59
+    issue: 1
+    start: 601
+    end: 620
+    year: 2025
+    doi: 10.1007/s10579-023-09716-6
+    notes: >-
+      The corpus this work evaluates on. It is a separate work under its own
+      terms and is not redistributed in this repository.

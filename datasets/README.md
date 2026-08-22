@@ -32,8 +32,25 @@ your local data is bit-identical to what produced the paper's results.
 
 ## What IS committed here
 
+- `preprocessing_meta.json` — KLPT version, row counts, and the SHA-256 of the
+  corpus going in and of the preprocessed file coming out
 - `../splits/split_manifest.json` — SHA-256 hashes + split metadata
 - `../splits/split_distribution.csv` — label x category counts per split
-- `../splits/dev_folds.csv` — `row_id -> fold` map (no text)
+- `../splits/dev_folds.csv` — `row_id -> fold` map (integers only, no text)
 
-Everything else in `datasets/` and the text-bearing split files stay local.
+Everything else in `datasets/` and the text-bearing split files stay local. This
+is enforced by `.gitignore`, not by discipline: `datasets/*.csv` and
+`splits/*.csv` are denied wholesale and the two safe split files are re-included
+by name. A new file dropped into either folder is therefore unpublished until
+someone adds an explicit exception — check the corpus terms before you do.
+
+## Verifying a regeneration
+
+```bash
+sha256sum datasets/KurdiSent.csv datasets/KurdiSent_preprocessed.csv           splits/dev_pool.csv splits/test_LOCKED.csv splits/dev_folds.csv
+```
+
+Compare against `source_sha256` / `output_sha256` in `preprocessing_meta.json`
+and against `source_sha256`, `dev_pool_sha256`, `test_locked_sha256` and
+`dev_folds_sha256` in `../splits/split_manifest.json`. All five matching means
+your local data is bit-identical to what produced the published results.

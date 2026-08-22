@@ -101,24 +101,61 @@ than another and the sampler seed is irrelevant):
 
 ```
 config.py                 central config (seeds, fractions, fixed HPs, search space)
+models.py                 datasets and architectures, defined once for every notebook
 utils_split.py            hashing / split helpers
 requirements.txt
 notebooks/                the full pipeline (see execution order below)
-splits/                   split manifest and fold map (generated)
+splits/                   split manifest, fold map, label distribution (generated)
 hpo/                      best_params.json per variant + Optuna study (generated)
 cv/                       per-variant summaries, OOF predictions, figures (generated)
 test_eval/                descriptive + significance CSVs (generated)
 analysis/                 gate saturation, category error rates, figures (generated)
-annotation/               re-annotation round builder + metadata
-datasets/                 (corpus not included — see datasets/README.md)
+annotation/               re-annotation builder, guidelines PDF, agreement summary
+datasets/                 preprocessing metadata only (corpus not included)
 ```
 
 ## Data
 
-The KurdiSent corpus is **not** redistributed here. Obtain it from the original
-source and regenerate the derived data locally; the seeds make this
-deterministic, and `splits/split_manifest.json` records SHA-256 hashes so you can
-verify your regeneration. See [`datasets/README.md`](datasets/README.md).
+The KurdiSent corpus is **not** redistributed here. It is a separate work by
+Badawi et al. (2025) under its own terms, and nothing in this repository
+reproduces its sentences. Obtain the corpus from the original source and
+regenerate the derived data locally; the seeds make this deterministic, and
+`splits/split_manifest.json` records SHA-256 hashes so you can verify your
+regeneration bit-for-bit. See [`datasets/README.md`](datasets/README.md).
+
+**Published** (text-free throughout — identifiers, labels, predictions,
+probabilities and aggregate statistics only):
+
+| path | contents |
+|---|---|
+| `datasets/preprocessing_meta.json` | KLPT version, row counts, SHA-256 of corpus in and out |
+| `splits/split_manifest.json` | split seed, sizes, SHA-256 of all four generated files |
+| `splits/dev_folds.csv` | `row_id -> fold` map for the development pool |
+| `splits/split_distribution.csv` | label x category counts per split |
+| `hpo/*/best_params.json` | the winning configuration per variant (the two control arms inherit dual-view's) |
+| `hpo/baseline_v2/study.db`, `hpo/dual_view_v2/study.db` | the two Optuna studies in full, all 24 trials each |
+| `cv/*/` | fold summaries, OOF predictions with class probabilities, confusion matrices |
+| `test_eval/` | the one-time test results and every significance test |
+| `analysis/` | category error rates, gate saturation, KLPT coverage |
+| `annotation/annotation_guidelines.pdf` | the guidelines both annotators worked from |
+| `annotation/agreement_summary_both_rounds.csv` | kappa, PABAK and CIs per comparison |
+
+**Not published**, and excluded by `.gitignore` rather than by hand: the corpus
+and everything derived from it that carries text (`datasets/*`,
+`splits/dev_pool.csv`, `splits/test_LOCKED.csv`, the whole
+`annotation/round1/` and `annotation/round2/` directories, `*_PRIVATE.csv`
+gold keys, `*_misclassified.csv`, `oof_surface_weights.csv`), plus the 20 fold
+checkpoints. The ignore rule denies these paths by default and re-includes the
+safe files by name, so a new file under `datasets/`, `splits/` or `annotation/`
+is unpublished until someone adds an explicit exception.
+
+One consequence for reproducibility: `kappa_evaluation_both_rounds` reads the
+annotators' label files, which carry the sentences they judged and therefore stay
+local. The notebook and its aggregate output are released, so the agreement
+figures can be checked, but re-running that notebook end to end requires
+rebuilding the rounds with `annotation/build_annotation_rounds.py` from your own
+copy of the corpus. Every other number in the paper comes from files committed
+here.
 
 ## Setup
 
@@ -130,6 +167,9 @@ The notebooks are written for **Google Colab** (they mount Google Drive). To run
 elsewhere, set the `KUSA_ROOT` environment variable to the checkout directory (or
 adjust the `sys.path.insert(...)` line at the top of each notebook) so that
 `from config import *` resolves; `config.py` is otherwise self-locating.
+`annotation/build_annotation_rounds.py` follows the same convention and resolves
+the root from its own location when `KUSA_ROOT` is unset. No path in this
+repository is tied to a particular machine or Drive account.
 
 ## Execution order
 
@@ -141,8 +181,8 @@ adjust the `sys.path.insert(...)` line at the top of each notebook) so that
 3. hpo_kusa_dual_view_dupinput_v2,
    hpo_kusa_dual_view_gated_v2    -> inherit from dual_view (no training)
 4. kusa_*_cv_v2 (4x)             -> cv/ (5 fold models per variant) + OOF
-5. kusa_category_error_outlier_v2, gate_analysis_v2,
-   kappa_evaluation_both_rounds   -> analysis/
+5. kusa_category_error_outlier_v2, gate_analysis_v2  -> analysis/
+   kappa_evaluation_both_rounds                      -> annotation/
 6. test_evaluation_v2            -> test_eval/   ONLY AT THE VERY END
 ```
 
@@ -175,13 +215,23 @@ any time after preprocessing.
 
 ## License
 
-Code: MIT (see [`LICENSE`](LICENSE)). The KurdiSent corpus is a separate work by
-Badawi et al. (2025) with its own terms and is not covered by this license.
+Code and the generated result files: MIT (see [`LICENSE`](LICENSE)).
+
+The KurdiSent corpus is a separate work by Badawi et al. (2025) with its own
+terms and is **not** covered by this license and **not** contained in this
+repository, in whole or in part. If you obtain the corpus to reproduce these
+results, its terms govern your use of it.
 
 ## Citation
 
-If you use this code, please cite our paper (details to follow) and the KurdiSent
-corpus:
+If you use this code or the released result files, please cite both the paper
+this repository accompanies and the corpus it is built on. Machine-readable
+metadata is in [`CITATION.cff`](CITATION.cff).
+
+> Lawan Mai, Shene Hassan. *Morphology-Aware Sentiment Analysis for Sorani
+> Kurdish: A Dual-View Adaptation of SARF.* Under review; venue and year to be
+> filled in on acceptance.
 
 > Soran Badawi, Arefeh Kazemi, Vali Rezaie (2025). KurdiSent: a corpus for
 > Kurdish sentiment analysis. Language Resources and Evaluation 59(1), 601-620.
+> https://doi.org/10.1007/s10579-023-09716-6
