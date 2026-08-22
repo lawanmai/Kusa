@@ -1,6 +1,13 @@
 * text=auto eol=lf
+
+# Binary artefacts: never line-ending-normalised, never diffed as text.
 *.png binary
 *.jpeg binary
 *.jpg binary
+*.pdf binary
 *.db binary
+
+# Notebooks: stored verbatim. They are committed with outputs stripped and with
+# Colab's executionInfo metadata (which carries a Google account name and id)
+# removed - do not commit raw Colab notebooks.
 *.ipynb -text

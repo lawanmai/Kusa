@@ -1,24 +1,74 @@
+# ---------------------------------------------------------------------------
+# kusa — what may and may not be published.
+#
+# The KurdiSent corpus (Badawi et al., 2025) is a separate work under its own
+# terms and is NOT redistributed here. The rule below is deliberately strict:
+# text-bearing paths are excluded wholesale and the few safe, text-free
+# artefacts are re-included by name. Adding a new file under splits/, datasets/
+# or annotation/ therefore requires an explicit exception — the default is
+# "not published". Do not relax this without re-checking the corpus licence.
+# ---------------------------------------------------------------------------
+
 # --- Python / Jupyter ---
 __pycache__/
 *.py[cod]
 .ipynb_checkpoints/
 .venv/
 venv/
+env/
+*.egg-info/
+.pytest_cache/
 
-# --- OS / editor ---
+# --- OS / editor / Google Drive sync ---
 .DS_Store
 Thumbs.db
+desktop.ini
 *.swp
+*~
+.vscode/
+.idea/
+*:Zone.Identifier
+*.tmp
+.tmp.drive*
+~$*
 
-# --- KurdiSent corpus & any derived FULL-TEXT files (NOT redistributed) ---
+# --- Secrets / local environment ---
+.env
+.env.*
+*.key
+*.pem
+credentials*.json
+token*.json
+
+# --- KurdiSent corpus & every derived FULL-TEXT file (NOT redistributed) ---
 # Obtain the corpus separately and regenerate these locally; see datasets/README.md.
 datasets/*.csv
-splits/dev_pool.csv
-splits/test_LOCKED.csv
+datasets/*.tsv
+datasets/*.txt
+datasets/*.parquet
+datasets/*.jsonl
 
-# --- Private blind-annotation gold keys (must never be committed) ---
+# splits/: deny by default, allow only the text-free files by name.
+splits/*.csv
+splits/*.txt
+splits/*.jsonl
+# dev_folds.csv is a row_id -> fold map (integers only);
+# split_distribution.csv is label x category counts per split.
+!splits/dev_folds.csv
+!splits/split_distribution.csv
+
+# --- Blind re-annotation: gold keys and everything carrying corpus text ---
+# The round exports/imports and the merged label tables all embed the sentences
+# the annotators saw, so the whole round directories stay local. Only the
+# aggregate agreement statistics are published.
 *_PRIVATE.csv
 *private*.csv
+annotation/round1/
+annotation/round2/
+annotation/round*/
+annotation/*.csv
+# Aggregate kappa / PABAK statistics only, no items and no text.
+!annotation/agreement_summary_both_rounds.csv
 
 # --- Text-bearing analysis exports (regenerate by running the notebooks) ---
 *_misclassified.csv
@@ -26,4 +76,8 @@ oof_surface_weights.csv
 
 # --- Model checkpoints (large; produced by the CV notebooks) ---
 *.pth
+*.pt
+*.bin
+*.ckpt
+*.safetensors
 final_models/
