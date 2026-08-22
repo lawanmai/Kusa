@@ -1,0 +1,13 @@
+{
+  "created": "2026-08-11T00:20:54",
+  "klpt_version": "0.1.7",
+  "source": "/content/drive/MyDrive/kusa/datasets/KurdiSent.csv",
+  "source_sha256": "fe90d301bc431495fb5002b0e1651f2f8287eb641dd446072f2f4ea5ccde7fc0",
+  "output": "/content/drive/MyDrive/kusa/datasets/KurdiSent_preprocessed.csv",
+  "output_sha256": "1ed2d675068f4d524441822b0e392596f1349e2bb9c56c65aef082cfedcdc2b6",
+  "n_rows_in": 12306,
+  "n_rows_out": 12306,
+  "n_dropped_empty_surface": 0,
+  "n_lemma_identical_to_surface": 12,
+  "schwa_whitelist_size": 5
+}
