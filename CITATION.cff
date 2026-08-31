@@ -8,8 +8,10 @@ abstract: >-
   Code and reproducibility artefacts for a dual-view adaptation of the SARF
   architecture to Sorani Kurdish sentiment analysis on the KurdiSent corpus,
   evaluated under a leakage-controlled held-out protocol with a capacity-matched
-  control that separates the architectural gain from the morphological one. The
-  KurdiSent corpus itself is not redistributed here.
+  control that separates the architectural gain from the morphological one.
+  Also releases the blind re-annotation audit of the corpus labels as a
+  text-free per-item table, which can be rejoined against KurdiSent on the item
+  identifier. The KurdiSent corpus itself is not redistributed here.
 type: software
 license: MIT
 repository-code: 'https://github.com/lawanmai/Kusa'
@@ -21,6 +23,9 @@ keywords:
   - multi-view learning
   - XLM-RoBERTa
   - reproducibility
+  - annotation quality
+  - inter-annotator agreement
+  - less-resourced languages
 authors:
   - family-names: Mai
     given-names: Lawan
@@ -29,14 +34,18 @@ authors:
 preferred-citation:
   type: unpublished
   title: >-
-    Does Morphological Multi-View Transfer to Low-Resource Kurdish? A Dual-View
-    Adaptation of SARF and a Re-Annotation Audit of KurdiSent
+    Annotation Quality and Morphological Coverage Limit Sentiment Analysis for
+    Sorani Kurdish: A Re-Annotation Audit of KurdiSent and a Dual-View Case
+    Study
   authors:
     - family-names: Mai
       given-names: Lawan
     - family-names: Hassan
       given-names: Shene
-  notes: Under review; venue and year to be filled in on acceptance.
+  notes: >-
+    Manuscript prepared for Language Resources and Evaluation (Springer),
+    special focus section on Less-Resourced Languages. Venue and year to be
+    filled in on acceptance.
 references:
   - type: article
     title: 'KurdiSent: a corpus for Kurdish sentiment analysis'
