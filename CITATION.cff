@@ -29,8 +29,16 @@ keywords:
 authors:
   - family-names: Mai
     given-names: Lawan
+    orcid: 'https://orcid.org/0009-0007-8437-0066'
   - family-names: Hassan
     given-names: Shene
+    orcid: 'https://orcid.org/0000-0002-5105-7395'
+  - family-names: Verma
+    given-names: Bhuvanesh
+    orcid: 'https://orcid.org/0009-0000-5706-7271'
+  - family-names: Mehler
+    given-names: Alexander
+    orcid: 'https://orcid.org/0000-0003-2567-7539'
 preferred-citation:
   type: unpublished
   title: >-
@@ -40,8 +48,16 @@ preferred-citation:
   authors:
     - family-names: Mai
       given-names: Lawan
+      orcid: 'https://orcid.org/0009-0007-8437-0066'
     - family-names: Hassan
       given-names: Shene
+      orcid: 'https://orcid.org/0000-0002-5105-7395'
+    - family-names: Verma
+      given-names: Bhuvanesh
+      orcid: 'https://orcid.org/0009-0000-5706-7271'
+    - family-names: Mehler
+      given-names: Alexander
+      orcid: 'https://orcid.org/0000-0003-2567-7539'
   notes: >-
     Manuscript prepared for Language Resources and Evaluation (Springer),
     special focus section on Less-Resourced Languages. Venue and year to be
