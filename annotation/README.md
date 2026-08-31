@@ -13,7 +13,11 @@ models' remaining error is label noise rather than model error.
 |---|---|---|---|
 | representative | 500 | full corpus, proportional to label x category | yes |
 | news top-up | 150 | news only, disjoint from arm 1 | yes |
-| audit | 95 | confident errors of the baseline as trained under the initial protocol | no |
+| audit | 99 | confident errors of the baseline as trained under the initial protocol | no |
+
+The three arms overlap by exactly four items: the audit arm holds 99 items, four
+of which were also drawn into the representative arm and are counted there, so
+95 items are audit-only. 500 + 150 + 95 = 745.
 
 Only arms 1 and 2 (650 items) enter the agreement statistics. The audit arm is
 batch context and is reported as counts, never as a rate: it was drawn from a
@@ -33,6 +37,16 @@ no round-2 rows appear in the agreement summary and no human ceiling is claimed.
 | `build_annotation_rounds.py` | rebuilds every round artefact from primary sources |
 | `annotation_build_meta.json` | seeds, arm sizes, SHA-256 of the inputs each round was drawn from |
 | `agreement_summary_both_rounds.csv` | per-comparison `n`, observed agreement, kappa with CI, PABAK |
+| `round1_labels_public.csv` | per-item labels for all 745 round-1 items, **without the sentences** |
+| `make_public_labels.py` | rebuilds that file from the private round-1 artefacts |
+
+`round1_labels_public.csv` is the audit released as a resource. Per item it gives
+the identifier, category, arm membership, the published gold label and the two
+annotators' independent labels — nine columns drawn from a closed vocabulary, no
+sentence and no annotator free-text note. That makes it distributable without
+redistributing KurdiSent: obtain the corpus, join on `id`, and every agreement
+figure in the paper follows. `make_public_labels.py` asserts on the way out that
+no value outside `{Negative, Neutral, Positive}` reaches the file.
 
 ## What is withheld, and why
 
@@ -44,9 +58,15 @@ in whole or in part, so the annotation rounds cannot be published either. The
 `*_key_PRIVATE.csv` gold keys are additionally withheld because they would let
 anyone reconstruct which items the blind arms contained.
 
+`round1_labels_public.csv` is the one exception, and it is an exception precisely
+because it carries no text: it is derived from those withheld files but keeps
+only identifiers and labels.
+
 This is why `notebooks/kappa_evaluation_both_rounds.ipynb` cannot be re-run from
 a fresh checkout: the notebook and its aggregate output are released, but its
-inputs are not. To reproduce it, obtain the corpus, then run
+inputs are not. The agreement figures themselves can now be recomputed from
+`round1_labels_public.csv` alone, without the corpus. To rebuild the rounds,
+obtain the corpus, then run
 
 ```bash
 python annotation/build_annotation_rounds.py

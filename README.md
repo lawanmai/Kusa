@@ -110,7 +110,8 @@ hpo/                      best_params.json per variant + Optuna study (generated
 cv/                       per-variant summaries, OOF predictions, figures (generated)
 test_eval/                descriptive + significance CSVs (generated)
 analysis/                 gate saturation, category error rates, figures (generated)
-annotation/               re-annotation builder, guidelines PDF, agreement summary
+annotation/               re-annotation builder, guidelines PDF, agreement summary,
+                          text-free per-item labels
 datasets/                 preprocessing metadata only (corpus not included)
 ```
 
@@ -139,6 +140,7 @@ probabilities and aggregate statistics only):
 | `analysis/` | category error rates, gate saturation, KLPT coverage |
 | `annotation/annotation_guidelines.pdf` | the guidelines both annotators worked from |
 | `annotation/agreement_summary_both_rounds.csv` | kappa, PABAK and CIs per comparison |
+| `annotation/round1_labels_public.csv` | per-item gold and both annotators' labels for all 745 round-1 items, without the sentences |
 
 **Not published**, and excluded by `.gitignore` rather than by hand: the corpus
 and everything derived from it that carries text (`datasets/*`,
@@ -151,11 +153,11 @@ is unpublished until someone adds an explicit exception.
 
 One consequence for reproducibility: `kappa_evaluation_both_rounds` reads the
 annotators' label files, which carry the sentences they judged and therefore stay
-local. The notebook and its aggregate output are released, so the agreement
-figures can be checked, but re-running that notebook end to end requires
-rebuilding the rounds with `annotation/build_annotation_rounds.py` from your own
-copy of the corpus. Every other number in the paper comes from files committed
-here.
+local. Re-running that notebook end to end requires rebuilding the rounds with
+`annotation/build_annotation_rounds.py` from your own copy of the corpus. The
+agreement figures themselves, however, can be recomputed without the corpus from
+`annotation/round1_labels_public.csv`, which carries the per-item labels but none
+of the text. Every other number in the paper comes from files committed here.
 
 ## Setup
 

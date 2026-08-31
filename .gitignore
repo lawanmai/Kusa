@@ -69,6 +69,10 @@ annotation/round*/
 annotation/*.csv
 # Aggregate kappa / PABAK statistics only, no items and no text.
 !annotation/agreement_summary_both_rounds.csv
+# Per-item labels WITHOUT the sentences: identifiers, arm membership, gold label
+# and the two annotators' labels, all from a closed vocabulary. Regenerate with
+# annotation/make_public_labels.py, which asserts that nothing else gets out.
+!annotation/round1_labels_public.csv
 
 # --- Text-bearing analysis exports (regenerate by running the notebooks) ---
 *_misclassified.csv
